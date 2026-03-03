@@ -3,104 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sajdah Dash | Prayer Tracker</title>
+    <title>AL-MUBIN ULTIMATE | Islamic Web Suite</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { background-color: #021a1e; color: #e2e8f0; font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .active-prayer { background: #d4af37 !important; color: #021a1e !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
-        .check-btn { transition: all 0.3s ease; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+        
+        :root {
+            --primary: #10b981;
+            --primary-dark: #064e3b;
+            --gold: #fbbf24;
+            --bg-deep: #020617;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        body {
+            background: var(--bg-deep);
+            background-attachment: fixed;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- UI Components --- */
+        .bold-header { font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+        
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .active-tab { color: var(--primary) !important; transform: translateY(-5px); }
+        .active-tab i { filter: drop-shadow(0 0 8px var(--primary)); }
+
+        .page-node {
+            display: none;
+            animation: pageIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        .page-node.active { display: block; }
+
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(20px); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        /* --- Quran Specifics --- */
+        .arabic-font { font-family: 'Amiri', serif; line-height: 4.5rem; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* --- Tasbih Animation --- */
+        .tasbih-btn:active { transform: scale(0.92); transition: 0.1s; }
+        .pulse-border { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="pb-32">
 
-    <div class="max-w-md mx-auto space-y-6">
-        <header class="text-center py-6">
-            <h1 id="current-time" class="text-5xl font-bold tracking-tighter text-white">00:00 PM</h1>
-            <p id="hijri-date" class="text-yellow-500 font-medium mt-2">Loading Hijri Date...</p>
-            <div class="mt-4 flex justify-center items-center gap-2 text-sm opacity-70">
-                <i class="fas fa-location-dot"></i>
-                <span>Detected Location</span>
-            </div>
-        </header>
-
-        <div class="glass-card rounded-3xl p-6 text-center">
-            <p class="uppercase tracking-widest text-xs opacity-60">Upcoming Prayer</p>
-            <h2 class="text-3xl font-serif italic my-2">Isha</h2>
-            <p class="text-xl font-light">Begins at <span class="font-bold text-yellow-500">7:55 PM</span></p>
+    <header class="p-6 flex justify-between items-center sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-lg">
+        <div>
+            <h1 class="bold-header text-3xl text-white">AL-MUBIN</h1>
+            <p id="hijri-display" class="text-[10px] text-primary font-bold tracking-widest uppercase">Loading Hijri...</p>
         </div>
+        <div class="flex gap-4">
+            <button onclick="showPage('settings')" class="w-12 h-12 glass-card flex items-center justify-center hover:bg-white/10">
+                <i class="fas fa-sliders text-primary"></i>
+            </button>
+        </div>
+    </header>
 
-        <section class="glass-card rounded-3xl p-6">
-            <h3 class="text-lg font-semibold mb-4 flex justify-between">
-                Daily Tracker
-                <span class="text-xs opacity-50" id="tracker-date"></span>
-            </h3>
-            <div class="flex justify-between gap-2" id="prayer-buttons">
-                <button onclick="togglePrayer('fajr')" id="btn-fajr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">F</button>
-                <button onclick="togglePrayer('dhuhr')" id="btn-dhuhr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">D</button>
-                <button onclick="togglePrayer('asr')" id="btn-asr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">A</button>
-                <button onclick="togglePrayer('maghrib')" id="btn-maghrib" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">M</button>
-                <button onclick="togglePrayer('isha')" id="btn-isha" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">I</button>
+    <main id="home" class="page-node active px-6">
+        <section class="py-10 text-center">
+            <h2 id="clock" class="text-7xl bold-header mb-2 tracking-tighter">00:00</h2>
+            <div class="flex justify-center items-center gap-2 text-primary font-bold">
+                <i class="fas fa-location-arrow text-xs"></i>
+                <span id="location-text">Detecting Location...</span>
             </div>
         </section>
 
-        <div class="grid grid-cols-3 gap-4">
-            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
-                <i class="fas fa-book-quran text-yellow-500 mb-2 text-xl"></i>
-                <p class="text-[10px] uppercase font-bold">Quran</p>
+        <div class="glass-card p-8 mb-8 shadow-2xl">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h3 class="bold-header text-xl">Daily Salat</h3>
+                    <p class="text-xs opacity-50 font-bold">MARK YOUR PRAYERS</p>
+                </div>
+                <span id="tracker-percent" class="text-3xl bold-header text-primary">0%</span>
             </div>
-            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
-                <i class="fas fa-kaaba text-yellow-500 mb-2 text-xl"></i>
-                <p class="text-[10px] uppercase font-bold">Qibla</p>
-            </div>
-            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
-                <i class="fas fa-beads text-yellow-500 mb-2 text-xl"></i>
-                <p class="text-[10px] uppercase font-bold">Tasbih</p>
-            </div>
+            <div class="flex justify-between" id="prayer-buttons-container">
+                </div>
         </div>
 
-        <div class="p-4 border-l-2 border-yellow-500 italic opacity-80 text-sm">
-            "Indeed, prayer prohibits immorality and wrongdoing." - (29:45)
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card p-6 border-l-4 border-l-gold">
+                <p class="text-[10px] font-black opacity-40 uppercase mb-1">Next Prayer</p>
+                <h4 class="text-2xl bold-header">Asr</h4>
+                <p class="text-gold font-bold">4:22 PM</p>
+            </div>
+            <div class="glass-card p-6">
+                <p class="text-[10px] font-black opacity-40 uppercase mb-1">Last Read</p>
+                <h4 class="text-2xl bold-header" id="last-read-name">Al-Fatiha</h4>
+                <p class="text-primary font-bold">Surah 1</p>
+            </div>
+        </div>
+    </main>
+
+    <section id="quran" class="page-node px-6">
+        <div class="mb-8">
+            <h2 class="bold-header text-5xl mb-4">The Quran</h2>
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-primary/50"></i>
+                <input type="text" id="quran-search" oninput="filterSurahs()" placeholder="Search Surah (e.g. Yaseen)" 
+                       class="w-full bg-white/5 border border-white/10 p-5 pl-12 rounded-2xl outline-none focus:border-primary transition font-bold">
+            </div>
+        </div>
+        <div id="quran-list" class="space-y-4 max-h-[65vh] overflow-y-auto pr-2 custom-scroll">
+            </div>
+    </section>
+
+    <section id="qibla" class="page-node px-6 text-center">
+        <h2 class="bold-header text-4xl mb-12">Qibla Direction</h2>
+        <div class="relative w-80 h-80 mx-auto">
+            <div class="absolute inset-0 border-[16px] border-white/5 rounded-full"></div>
+            <div id="compass" class="w-full h-full relative transition-transform duration-500 ease-out">
+                <img src="https://cdn-icons-png.flaticon.com/512/149/149023.png" class="w-full h-full p-4 opacity-20" alt="Compass Face">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4">
+                    <i class="fas fa-caret-down text-5xl text-primary"></i>
+                </div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gold">
+                    <i class="fas fa-kaaba text-6xl"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-12 glass-card p-6 inline-block">
+            <p id="qibla-degree" class="text-3xl bold-header">0°</p>
+            <p class="text-[10px] font-bold opacity-50">DEGREES FROM NORTH</p>
+        </div>
+    </section>
+
+    <section id="tasbih" class="page-node px-6 text-center">
+        <h2 class="bold-header text-4xl mb-8">Tasbih</h2>
+        <div class="flex flex-col items-center justify-center space-y-10">
+            <div onclick="incrementTasbih()" class="tasbih-btn w-64 h-64 rounded-full glass-card flex flex-col items-center justify-center cursor-pointer border-4 border-primary/20 pulse-border">
+                <span id="tasbih-count" class="text-7xl bold-header">0</span>
+                <span class="text-xs font-black opacity-30 mt-2">TAP TO DHIKR</span>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="resetTasbih()" class="px-10 py-4 glass-card text-xs font-black hover:bg-red-500/10 transition">RESET</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="reader-overlay" class="fixed inset-0 z-[100] bg-[#020617] hidden overflow-y-auto">
+        <div class="p-6 max-w-3xl mx-auto">
+            <div class="flex justify-between items-center sticky top-0 bg-[#020617]/95 py-6 mb-10 border-b border-white/10">
+                <button onclick="closeReader()" class="text-primary bold-header">← Exit</button>
+                <h3 id="reader-title" class="bold-header text-xl">Surah</h3>
+                <div class="w-8"></div>
+            </div>
+            <div id="ayah-content" class="space-y-16 pb-32">
+                </div>
         </div>
     </div>
 
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] glass-card p-4 flex justify-around items-center z-50 border border-white/20 shadow-2xl">
+        <button onclick="showPage('home')" class="nav-item active-tab flex flex-col items-center">
+            <i class="fas fa-house-chimney text-xl"></i><span class="text-[8px] font-black mt-1">HOME</span>
+        </button>
+        <button onclick="showPage('quran')" class="nav-item flex flex-col items-center">
+            <i class="fas fa-book-quran text-xl"></i><span class="text-[8px] font-black mt-1">QURAN</span>
+        </button>
+        <button onclick="showPage('tasbih')" class="nav-item flex flex-col items-center">
+            <i class="fas fa-fingerprint text-xl"></i><span class="text-[8px] font-black mt-1">TASBIH</span>
+        </button>
+        <button onclick="showPage('qibla')" class="nav-item flex flex-col items-center">
+            <i class="fas fa-compass text-xl"></i><span class="text-[8px] font-black mt-1">QIBLA</span>
+        </button>
+    </nav>
+
     <script>
-        // Update Time
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('current-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('tracker-date').innerText = now.toLocaleDateString();
+        /* --- CORE STATE --- */
+        let state = {
+            tasbih: parseInt(localStorage.getItem('tasbih_val')) || 0,
+            prayers: JSON.parse(localStorage.getItem('prayer_log')) || [false, false, false, false, false],
+            surahs: [],
+            lastRead: localStorage.getItem('last_read_name') || 'Al-Fatiha'
+        };
+
+        /* --- INITIALIZATION --- */
+        window.onload = () => {
+            initClock();
+            initTracker();
+            loadQuranList();
+            updateTasbihDisplay();
+            document.getElementById('last-read-name').innerText = state.lastRead;
+            // Mock Hijri
+            document.getElementById('hijri-display').innerText = "05 Ramadan 1447 AH";
+        };
+
+        /* --- NAVIGATION SYSTEM --- */
+        function showPage(pageId) {
+            document.querySelectorAll('.page-node').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-tab'));
+            
+            document.getElementById(pageId).classList.add('active');
+            event.currentTarget.classList.add('active-tab');
+            window.scrollTo(0,0);
         }
-        setInterval(updateTime, 1000);
-        updateTime();
 
-        // Hijri Date Mock (In production, use an API like Aladhan)
-        document.getElementById('hijri-date').innerText = "28 Safar 1446 AH";
-
-        // Tracker Logic
-        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-        let trackerData = JSON.parse(localStorage.getItem('prayerData')) || {};
-
-        function togglePrayer(name) {
-            trackerData[name] = !trackerData[name];
-            localStorage.setItem('prayerData', JSON.stringify(trackerData));
-            renderTracker();
+        /* --- CLOCK & TRACKER --- */
+        function initClock() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
+            }, 1000);
         }
 
-        function renderTracker() {
-            prayers.forEach(p => {
-                const btn = document.getElementById(`btn-${p}`);
-                if (trackerData[p]) {
-                    btn.classList.add('active-prayer');
-                    btn.innerHTML = '<i class="fas fa-check"></i>';
-                } else {
-                    btn.classList.remove('active-prayer');
-                    btn.innerText = p.charAt(0).toUpperCase();
-                }
-            });
+        function initTracker() {
+            const names = ['F', 'D', 'A', 'M', 'I'];
+            const container = document.getElementById('prayer-buttons-container');
+            container.innerHTML = state.prayers.map((status, i) => `
+                <button onclick="togglePrayer(${i})" class="w-12 h-12 rounded-2xl border-2 font-black transition-all duration-300 
+                ${status ? 'bg-primary border-primary text-bg-deep' : 'border-white/10 text-white'}">
+                    ${names[i]}
+                </button>
+            `).join('');
+            
+            const completed = state.prayers.filter(p => p).length;
+            document.getElementById('tracker-percent').innerText = `${(completed / 5) * 100}%`;
         }
-        renderTracker();
+
+        function togglePrayer(index) {
+            state.prayers[index] = !state.prayers[index];
+            localStorage.setItem('prayer_log', JSON.stringify(state.prayers));
+            initTracker();
+            navigator.vibrate?.(40);
+        }
+
+        /* --- QURAN ENGINE --- */
+        async function loadQuranList() {
+            const list = document.getElementById('quran-list');
+            try {
+                const res = await fetch('https://api.alquran.cloud/v1/surah');
+                const data = await res.json();
+                state.surahs = data.data;
+                renderSurahs(state.surahs);
+            } catch (e) {
+                list.innerHTML = `<p class="text-red-400">Error connecting to Quran API.</p>`;
+            }
+        }
+
+        function renderSurahs(arr) {
+            const list = document.getElementById('quran-list');
+            list.innerHTML = arr.map(s => `
+                <div onclick="openSurah(${s.number}, '${s.englishName}')" class="glass-card p-6 flex justify-between items-center hover:border-primary cursor-pointer active:scale-95 transition">
+                    <div class="flex items-center gap-5">
+                        <span class="text-2xl bold-header opacity-10">${s.number}</span>
+                        <div>
+                            <h4 class="bold-header text-white">${s.englishName}</h4>
+                            <p class="text-[10px] font-black text-primary uppercase">${s.revelationType} • ${s.numberOfAyahs} Ayahs</p>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-primary">${s.name}</p>
+                </div>
+            `).join('');
+        }
+
+        function filterSurahs() {
+            const query = document.getElementById('quran-search').value.toLowerCase();
+            const filtered = state.surahs.filter(s => s.englishName.toLowerCase().includes(query));
+            renderSurahs(filtered);
+        }
+
+        async function openSurah(id, name) {
+            const overlay = document.getElementById('reader-overlay');
+            const content = document.getElementById('ayah-content');
+            document.getElementById('reader-title').innerText = name;
+            overlay.classList.remove('hidden');
+            content.innerHTML = `<p class="text-center animate-pulse py-20 font-bold opacity-30">FECHING REVELATION...</p>`;
+
+            try {
+                const [ar, en] = await Promise.all([
+                    fetch(`https://api.alquran.cloud/v1/surah/${id}`),
+                    fetch(`https://api.alquran.cloud/v1/surah/${id}/en.sahih`)
+                ]);
+                const arData = await ar.json();
+                const enData = await en.json();
+
+                content.innerHTML = arData.data.ayahs.map((ayah, i) => `
+                    <div class="relative group">
+                        <span class="absolute -left-2 top-0 text-[10px] font-black text-primary opacity-30">AYAH ${ayah.numberInSurah}</span>
+                        <p class="text-4xl text-right leading-[4.5rem] font-bold text-white mb-6" dir="rtl">${ayah.text}</p>
+                        <p class="text-gray-400 font-medium leading-relaxed">${enData.data.ayahs[i].text}</p>
+                    </div>
+                `).join('');
+                
+                state.lastRead = name;
+                localStorage.setItem('last_read_name', name);
+                document.getElementById('last-read-name').innerText = name;
+            } catch (e) {
+                content.innerHTML = `<p class="text-red-500">Failed to load verses.</p>`;
+            }
+        }
+
+        function closeReader() { document.getElementById('reader-overlay').classList.add('hidden'); }
+
+        /* --- TASBIH ENGINE --- */
+        function incrementTasbih() {
+            state.tasbih++;
+            updateTasbihDisplay();
+            localStorage.setItem('tasbih_val', state.tasbih);
+            navigator.vibrate?.(60);
+        }
+        function resetTasbih() {
+            state.tasbih = 0;
+            updateTasbihDisplay();
+            localStorage.setItem('tasbih_val', 0);
+        }
+        function updateTasbihDisplay() {
+            document.getElementById('tasbih-count').innerText = state.tasbih;
+        }
+
+        /* --- COMPASS ENGINE --- */
+        window.addEventListener('deviceorientationabsolute', (e) => {
+            if (e.alpha !== null) {
+                const degree = Math.round(e.alpha);
+                document.getElementById('compass').style.transform = `rotate(${-degree}deg)`;
+                document.getElementById('qibla-degree').innerText = `${degree}°`;
+            }
+        }, true);
     </script>
 </body>
 </html>
