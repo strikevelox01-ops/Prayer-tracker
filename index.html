@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sajdah Dash | Prayer Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #021a1e; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .active-prayer { background: #d4af37 !important; color: #021a1e !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .check-btn { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-md mx-auto space-y-6">
+        <header class="text-center py-6">
+            <h1 id="current-time" class="text-5xl font-bold tracking-tighter text-white">00:00 PM</h1>
+            <p id="hijri-date" class="text-yellow-500 font-medium mt-2">Loading Hijri Date...</p>
+            <div class="mt-4 flex justify-center items-center gap-2 text-sm opacity-70">
+                <i class="fas fa-location-dot"></i>
+                <span>Detected Location</span>
+            </div>
+        </header>
+
+        <div class="glass-card rounded-3xl p-6 text-center">
+            <p class="uppercase tracking-widest text-xs opacity-60">Upcoming Prayer</p>
+            <h2 class="text-3xl font-serif italic my-2">Isha</h2>
+            <p class="text-xl font-light">Begins at <span class="font-bold text-yellow-500">7:55 PM</span></p>
+        </div>
+
+        <section class="glass-card rounded-3xl p-6">
+            <h3 class="text-lg font-semibold mb-4 flex justify-between">
+                Daily Tracker
+                <span class="text-xs opacity-50" id="tracker-date"></span>
+            </h3>
+            <div class="flex justify-between gap-2" id="prayer-buttons">
+                <button onclick="togglePrayer('fajr')" id="btn-fajr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">F</button>
+                <button onclick="togglePrayer('dhuhr')" id="btn-dhuhr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">D</button>
+                <button onclick="togglePrayer('asr')" id="btn-asr" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">A</button>
+                <button onclick="togglePrayer('maghrib')" id="btn-maghrib" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">M</button>
+                <button onclick="togglePrayer('isha')" id="btn-isha" class="check-btn w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center font-bold">I</button>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-3 gap-4">
+            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
+                <i class="fas fa-book-quran text-yellow-500 mb-2 text-xl"></i>
+                <p class="text-[10px] uppercase font-bold">Quran</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
+                <i class="fas fa-kaaba text-yellow-500 mb-2 text-xl"></i>
+                <p class="text-[10px] uppercase font-bold">Qibla</p>
+            </div>
+            <div class="glass-card p-4 rounded-2xl text-center hover:bg-white/10 cursor-pointer transition">
+                <i class="fas fa-beads text-yellow-500 mb-2 text-xl"></i>
+                <p class="text-[10px] uppercase font-bold">Tasbih</p>
+            </div>
+        </div>
+
+        <div class="p-4 border-l-2 border-yellow-500 italic opacity-80 text-sm">
+            "Indeed, prayer prohibits immorality and wrongdoing." - (29:45)
+        </div>
+    </div>
+
+    <script>
+        // Update Time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('tracker-date').innerText = now.toLocaleDateString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Hijri Date Mock (In production, use an API like Aladhan)
+        document.getElementById('hijri-date').innerText = "28 Safar 1446 AH";
+
+        // Tracker Logic
+        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        let trackerData = JSON.parse(localStorage.getItem('prayerData')) || {};
+
+        function togglePrayer(name) {
+            trackerData[name] = !trackerData[name];
+            localStorage.setItem('prayerData', JSON.stringify(trackerData));
+            renderTracker();
+        }
+
+        function renderTracker() {
+            prayers.forEach(p => {
+                const btn = document.getElementById(`btn-${p}`);
+                if (trackerData[p]) {
+                    btn.classList.add('active-prayer');
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                } else {
+                    btn.classList.remove('active-prayer');
+                    btn.innerText = p.charAt(0).toUpperCase();
+                }
+            });
+        }
+        renderTracker();
+    </script>
+</body>
+</html>
